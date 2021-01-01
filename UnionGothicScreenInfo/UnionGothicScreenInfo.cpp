@@ -129,25 +129,15 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void initOptions() {		
-		TSystemLangID lang = Union.GetSystemLanguage();
-		switch (lang)
+
+		defaultManaName = "Mana";
+		switch (Union.GetSystemLanguage())
 		{
-		case Lang_Rus: 
-			defaultHealthName = "Жизнь";
-			defaultManaName = "Мана";
-			break;
-		case Lang_Ger:
-			defaultHealthName = "Gesundheit";
-			defaultManaName = "Mana";
-			break;
-		case Lang_Pol:
-			defaultHealthName = "Zdrowie";
-			defaultManaName = "Mana";
-			break;
-		default:
-			defaultHealthName = "HP";
-			defaultManaName = "MP";
-			break;
+			case Lang_Rus: defaultHealthName = "Жизнь"; defaultManaName = "Мана"; break;
+			case Lang_Eng: defaultHealthName = "Health";  break;
+			case Lang_Ger: defaultHealthName = "Gesundheit"; break;
+			case Lang_Pol: defaultHealthName = "Zdrowie"; 	break;
+			default: defaultHealthName = "HP"; defaultManaName = "MP"; break;
 		}
 
 		zSTRING speedWorldKey = zoptions->ReadString("show_additional_info", "speedWorldKey", "Z");
