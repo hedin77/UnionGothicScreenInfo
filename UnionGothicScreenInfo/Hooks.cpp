@@ -42,10 +42,17 @@ namespace GOTHIC_ENGINE {
         if (bNeedShowDamageInfo) {
             int realDamage = oldTargetHP - target->GetAttribute(NPC_ATR_HITPOINTS);
             if (playerIsDamager && (realDamage > 0 || damageShowZero)) {
+                zVEC3 npcPosition = target->GetPositionWorld() + zVEC3(0.0f, 130.0f, 0.0f);
+                zCCamera* cam = ogame->GetCamera();
+                zVEC3 viewPos = cam->GetTransform(zTCamTrafoType::zCAM_TRAFO_VIEW) * npcPosition;
+                int x, y;
+                cam->Project(&viewPos, x, y);
                 DamageText dmg;
                 dmg.currentTime = 0;
                 dmg.damage = Z(realDamage);
                 dmg.targetEnemy = target;
+                dmg.lastLivePosX = x;
+                dmg.lastLivePosY = y;
                 damages.Insert(dmg);
             }
         }

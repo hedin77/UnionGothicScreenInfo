@@ -10,10 +10,12 @@ namespace GOTHIC_ENGINE {
 		zSTRING damage;
 		int currentTime;
 		oCNpc* targetEnemy;
+		int lastLivePosX; 
+		int lastLivePosY;
 	};
 
 	struct BarParams {
-		int x; int y;  int h;int w;
+		int x; int y;  int h; int w;
 	};
 
 	BarParams playerHealth; 
@@ -64,42 +66,10 @@ namespace GOTHIC_ENGINE {
 	static int barSizeOriginalY = -1;
 	const float enemyBarScaleMin = 0.5;
 	const float enemyBarScaleMax = 1.0;
-	static zSTRING defaultHealthName;
-	static zSTRING defaultManaName;
-
-	void splitToStringArray(zSTRING str, Array<string> arraysMult, bool needSort) {
-		char delimiter = ',';
-		int idx = 0;
-		bool oneFound = false;
-		char* strChars = str.ToChar();
-		int len = strlen(strChars);
-		string tempNumber = string();
-
-		for (int ii = 0; ii < len; ii++) {
-			char current = strChars[ii];
-			if (current == delimiter) {
-				if(needSort)
-					arraysMult.InsertSorted(tempNumber);
-				else
-					arraysMult.InsertEnd(tempNumber);
-				tempNumber = string();
-			}
-			else {
-				tempNumber = tempNumber + string(strChars[ii]);
-				if (ii == len - 1) {
-					if(needSort)
-						arraysMult.InsertSorted(atof(tempNumber));
-					else 
-						arraysMult.InsertEnd(atof(tempNumber));
-				}
-			}
-		}
-	}
 
 	void MultParamToDoubleArray(zSTRING str, Array<double> arraysMult) {
 		bool oneFound = false; 
-		Array<string> arraysString; 
-		splitToStringArray(str, arraysString, true);
+		Array<string> arraysString = CStringA(str).Split(",");
 		int len = arraysString.GetNum();
 		for (int ii = 0; ii < len; ii++) {
 			double param = atof(arraysString.GetSafe(ii)->ToChar());
@@ -109,13 +79,12 @@ namespace GOTHIC_ENGINE {
 			}
 		}
 		if (!oneFound) {
-			arraysMult.Insert(1.0);
+			arraysMult.InsertSorted(1.0);
 		}
 	}
 
 	void MultParamToIntArray(zSTRING str, Array<int> arraysMult) {
-		Array<string> arraysString;
-		splitToStringArray(str, arraysString, false);
+		Array<string> arraysString = CStringA(str).Split(",");
 		int len = arraysString.GetNum();
 		for (int ii = 0; ii < len; ii++) {
 			int param = atoi(arraysString.GetSafe(ii)->ToChar());
@@ -130,14 +99,16 @@ namespace GOTHIC_ENGINE {
 
 	void initOptions() {		
 
-		defaultManaName = "Mana";
+		zSTRING defaultHealthName = "HP";
+		zSTRING defaultManaName = "MP";
+
 		switch (Union.GetSystemLanguage())
 		{
 			case Lang_Rus: defaultHealthName = "Жизнь"; defaultManaName = "Мана"; break;
-			case Lang_Eng: defaultHealthName = "Health";  break;
-			case Lang_Ger: defaultHealthName = "Gesundheit"; break;
-			case Lang_Pol: defaultHealthName = "Zdrowie"; 	break;
-			default: defaultHealthName = "HP"; defaultManaName = "MP"; break;
+			case Lang_Eng: defaultHealthName = "Health"; defaultManaName = "Mana";  break;
+			case Lang_Ger: defaultHealthName = "Gesundheit"; defaultManaName = "Mana";  break;
+			case Lang_Pol: defaultHealthName = "Zdrowie"; defaultManaName = "Mana";  break;
+			default: break;
 		}
 
 		zSTRING speedWorldKey = zoptions->ReadString("show_additional_info", "speedWorldKey", "Z");
@@ -444,8 +415,11 @@ namespace GOTHIC_ENGINE {
 					zVEC3 viewPos = cam->GetTransform(zTCamTrafoType::zCAM_TRAFO_VIEW) * npcPosition;
 					int x, y;
 					cam->Project(&viewPos, x, y);
-
 					if (viewPos[2] > cam->nearClipZ) {
+						if (foundNpc->attribute[NPC_ATR_HITPOINTS] <= 0) {
+							x = dmg->lastLivePosX; 
+							y = dmg->lastLivePosY;
+						}
 						int currentX = screen->anx(x + 0.5f) +  shiftY;
 						int currentY = screen->any(y + 0.5f) - tick;
 						damageView->Print(currentX, currentY, dmg->damage);
