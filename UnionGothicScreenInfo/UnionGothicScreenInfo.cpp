@@ -64,6 +64,8 @@ namespace GOTHIC_ENGINE {
 	static int barSizeOriginalY = -1;
 	const float enemyBarScaleMin = 0.5;
 	const float enemyBarScaleMax = 1.0;
+	static zSTRING defaultHealthName;
+	static zSTRING defaultManaName;
 
 	void splitToStringArray(zSTRING str, Array<string> arraysMult, bool needSort) {
 		char delimiter = ',';
@@ -127,6 +129,27 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void initOptions() {		
+		TSystemLangID lang = Union.GetSystemLanguage();
+		switch (lang)
+		{
+		case Lang_Rus: 
+			defaultHealthName = "Жизнь";
+			defaultManaName = "Мана";
+			break;
+		case Lang_Ger:
+			defaultHealthName = "Gesundheit";
+			defaultManaName = "Mana";
+			break;
+		case Lang_Pol:
+			defaultHealthName = "Zdrowie";
+			defaultManaName = "Mana";
+			break;
+		default:
+			defaultHealthName = "HP";
+			defaultManaName = "MP";
+			break;
+		}
+
 		zSTRING speedWorldKey = zoptions->ReadString("show_additional_info", "speedWorldKey", "Z");
 		if (speedWorldKey.Compare("F")) {
 			speedWorldKeyId = KEY_F;
@@ -164,8 +187,8 @@ namespace GOTHIC_ENGINE {
 		bshowEnemyHealth = zoptions->ReadInt("show_additional_info", "bShowEnemyHealth", TRUE);
 
 		bshowPlayerHealthAndMana = zoptions->ReadInt("show_additional_info", "bshowPlayerHealthAndMana", TRUE);
-		playerHealthName = zoptions->ReadString("show_additional_info", "playerHealthName", "Жизнь");
-		playerManaName = zoptions->ReadString("show_additional_info", "playerManaName", "Мана");
+		playerHealthName = zoptions->ReadString("show_additional_info", "playerHealthName", defaultHealthName);
+		playerManaName = zoptions->ReadString("show_additional_info", "playerManaName", defaultManaName);
 		playerHealthNamePos = zoptions->ReadInt("show_additional_info", "playerHealthNamePosMode", 0);
 		playerManaNamePos = zoptions->ReadInt("show_additional_info", "playerManaNamePosMode", 0);
 
