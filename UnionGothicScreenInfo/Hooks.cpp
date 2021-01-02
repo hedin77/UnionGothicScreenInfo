@@ -49,10 +49,10 @@ namespace GOTHIC_ENGINE {
                 cam->Project(&viewPos, x, y);
                 DamageText dmg;
                 dmg.currentTime = 0;
-                dmg.damage = Z(realDamage);
+                dmg.damage = A(realDamage);
                 dmg.targetEnemy = target;
-                dmg.lastLivePosX = x;
-                dmg.lastLivePosY = y;
+                dmg.correctionShiftByY = 0;
+                dmg.lastY = y;
                 damages.Insert(dmg);
             }
         }

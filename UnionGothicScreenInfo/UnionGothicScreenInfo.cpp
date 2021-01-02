@@ -7,11 +7,11 @@ namespace GOTHIC_ENGINE {
 	#define playerIsDead player->attribute[NPC_ATR_HITPOINTS] <= 0
 
 	struct DamageText { 
-		zSTRING damage;
+		string damage;
 		int currentTime;
 		oCNpc* targetEnemy;
-		int lastLivePosX; 
-		int lastLivePosY;
+		int lastY; 
+		int correctionShiftByY;
 	};
 
 	struct BarParams {
@@ -40,11 +40,11 @@ namespace GOTHIC_ENGINE {
 	int bshowEnemyHealth;
 	int bshowPlayerHealthAndMana;
 	int bshowDate;
-	zSTRING sDay;
-	zSTRING playerHealthName;
-	zSTRING playerManaName;
-	zSTRING playerHealthBarParams;
-	zSTRING playerManaBarParams;
+	string sDay;
+	string playerHealthName;
+	string playerManaName;
+	string playerHealthBarParams;
+	string playerManaBarParams;
 	int playerHealthNamePos;
 	int playerManaNamePos;
 	int bNeedShowBarAboveEnemy; 
@@ -98,7 +98,6 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void initOptions() {		
-
 		zSTRING defaultHealthName = "HP";
 		zSTRING defaultManaName = "MP";
 
@@ -124,7 +123,7 @@ namespace GOTHIC_ENGINE {
 		MultParamToDoubleArray(param, speedModeMults);
 
 		bshowDate = zoptions->ReadInt("show_additional_info", "bShowDate", TRUE);
-		sDay = zoptions->ReadString("show_additional_info", "sDay", "Δενό:");
+		sDay = A zoptions->ReadString("show_additional_info", "sDay", "Δενό:");
 
 		bMunitionInfo = zoptions->ReadInt("show_additional_info", "bMunitionInfo", TRUE);	
 		int munitionColorR = zoptions->ReadInt("show_additional_info", "MunitionColorR", 51);
@@ -148,8 +147,8 @@ namespace GOTHIC_ENGINE {
 		bshowEnemyHealth = zoptions->ReadInt("show_additional_info", "bShowEnemyHealth", TRUE);
 
 		bshowPlayerHealthAndMana = zoptions->ReadInt("show_additional_info", "bshowPlayerHealthAndMana", TRUE);
-		playerHealthName = zoptions->ReadString("show_additional_info", "playerHealthName", defaultHealthName);
-		playerManaName = zoptions->ReadString("show_additional_info", "playerManaName", defaultManaName);
+		playerHealthName = A zoptions->ReadString("show_additional_info", "playerHealthName", defaultHealthName);
+		playerManaName = A zoptions->ReadString("show_additional_info", "playerManaName", defaultManaName);
 		playerHealthNamePos = zoptions->ReadInt("show_additional_info", "playerHealthNamePosMode", 0);
 		playerManaNamePos = zoptions->ReadInt("show_additional_info", "playerManaNamePosMode", 0);
 
@@ -164,10 +163,10 @@ namespace GOTHIC_ENGINE {
 					zCOLOR textColor = zCOLOR(245, 247, 225);
 					screenMiscShowDate->SetFontColor(textColor);
 					if (min >= 10) {
-						screenMiscShowDate->Print(1, nFont + 100, sDay + " " + zSTRING(day + 1) + " " + zSTRING(hour) + ":" + zSTRING(min));
+						screenMiscShowDate->Print(1, nFont + 100, sDay + " " + A(day + 1) + " " + A(hour) + ":" + A(min));
 					}
 					else {
-						screenMiscShowDate->Print(1, nFont + 100, sDay + " " + zSTRING(day + 1) + " " + +zSTRING(hour) + ":0" + zSTRING(min));
+						screenMiscShowDate->Print(1, nFont + 100, sDay + " " + A(day + 1) + " " + +A(hour) + ":0" + A(min));
 					}
 				}
 		}
@@ -282,8 +281,8 @@ namespace GOTHIC_ENGINE {
 			oCViewStatusBar* hpBar = ogame->hpBar;
 			oCViewStatusBar* manaBar = ogame->manaBar;
 			if (hpBar && manaBar) {
-				zSTRING hp = playerHealthName + ": " + (zSTRING)player->attribute[NPC_ATR_HITPOINTS] + "/" + (zSTRING)player->attribute[NPC_ATR_HITPOINTSMAX];
-				zSTRING mana = playerManaName + ": " + (zSTRING)player->attribute[NPC_ATR_MANA] + "/" + (zSTRING)player->attribute[NPC_ATR_MANAMAX];		
+				zSTRING hp = playerHealthName + ": " + A player->attribute[NPC_ATR_HITPOINTS] + "/" +  A player->attribute[NPC_ATR_HITPOINTSMAX];
+				zSTRING mana = playerManaName + ": " + A player->attribute[NPC_ATR_MANA] + "/" + A player->attribute[NPC_ATR_MANAMAX];		
 				showBar(hpBar, playerHealthNamePos, hp);
 				showBar(manaBar, playerManaNamePos, mana);
 			}
@@ -405,7 +404,7 @@ namespace GOTHIC_ENGINE {
 			for (uint i = 0; i < damages.GetNum(); i++) {
 				DamageText* dmg = damages.GetSafe(i);
 				tick = 1.7 * dmg->currentTime;
-				int shiftY = min(tick/3, 80);
+				int shiftX = min(tick/3, 80);
 
 				oCNpc* foundNpc = dmg->targetEnemy;
 
@@ -416,13 +415,18 @@ namespace GOTHIC_ENGINE {
 					int x, y;
 					cam->Project(&viewPos, x, y);
 					if (viewPos[2] > cam->nearClipZ) {
-						if (foundNpc->attribute[NPC_ATR_HITPOINTS] <= 0) {
-							x = dmg->lastLivePosX; 
-							y = dmg->lastLivePosY;
+						int hp = foundNpc->attribute[NPC_ATR_HITPOINTS];
+						bool isDead = hp <= 0;
+						if (isDead) {
+							if ((y - dmg->lastY) > 0) {
+								dmg->correctionShiftByY = dmg->correctionShiftByY + y - dmg->lastY;
+							}							
 						}
-						int currentX = screen->anx(x + 0.5f) +  shiftY;
-						int currentY = screen->any(y + 0.5f) - tick;
+
+						int currentX = screen->anx(x + 0.5f) + shiftX;
+						int currentY = screen->any(y + 0.5f - dmg->correctionShiftByY) - tick;
 						damageView->Print(currentX, currentY, dmg->damage);
+						dmg->lastY = y;
 					}
 				}
 				
@@ -452,7 +456,7 @@ namespace GOTHIC_ENGINE {
 		oCViewStatusBar* manaBar = ogame->manaBar;
 		if (hpBar) {
 			if (playerHealthBarParams.IsEmpty()) {
-				playerHealthBarParams = zoptions->ReadString("show_additional_info", "playerHealthBarParams", getBarParams(hpBar));
+				playerHealthBarParams = A zoptions->ReadString("show_additional_info", "playerHealthBarParams", getBarParams(hpBar));
 				updateBarParams(&playerHealth, playerHealthBarParams);
 			}
 			updateBar(hpBar, playerHealth);
@@ -461,7 +465,7 @@ namespace GOTHIC_ENGINE {
 		
 		if (manaBar) {
 			if (playerManaBarParams.IsEmpty()) {
-				playerManaBarParams = zoptions->ReadString("show_additional_info", "playerManaBarParams", getBarParams(manaBar));
+				playerManaBarParams = A zoptions->ReadString("show_additional_info", "playerManaBarParams", getBarParams(manaBar));
 				updateBarParams(&playerMana, playerManaBarParams);
 			}
 			updateBar(manaBar, playerMana);
