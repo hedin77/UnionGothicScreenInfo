@@ -297,13 +297,13 @@ namespace GOTHIC_ENGINE {
 				int  focusPSizeX = focusBar->psizex;
 
 				float scaleMult = getScaleMult();
-				float addY = (1.5 * enemyBarScaleMin / scaleMult);
+				float addY = (1.6 * enemyBarScaleMin / scaleMult);
 
-				int y = bNeedShowBarAboveEnemy ? focusY - (focusSize * (0.3 + addY)) : focusY + (focusSize * 1.4);
+				int y = bNeedShowBarAboveEnemy ? focusY - (focusSize * (0.2 + addY)) : focusY + (focusSize * 1.4);
 
 
 				oCNpc* npc = player->GetFocusNpc();
-				if (npc && !(playerIsDead)) {
+				if (npc && !(npc->attribute[NPC_ATR_HITPOINTS] > 0 )) {
 					zSTRING npcName = npc->name[0];
 					int hp = npc->attribute[NPC_ATR_HITPOINTS];
 					int hpMax = npc->attribute[NPC_ATR_HITPOINTSMAX];
