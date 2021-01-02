@@ -303,7 +303,7 @@ namespace GOTHIC_ENGINE {
 
 
 				oCNpc* npc = player->GetFocusNpc();
-				if (npc && !(npc->attribute[NPC_ATR_HITPOINTS] > 0 )) {
+				if (npc && npc->attribute[NPC_ATR_HITPOINTS] > 0 ) {
 					zSTRING npcName = npc->name[0];
 					int hp = npc->attribute[NPC_ATR_HITPOINTS];
 					int hpMax = npc->attribute[NPC_ATR_HITPOINTSMAX];
