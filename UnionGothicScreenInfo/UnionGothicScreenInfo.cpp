@@ -415,14 +415,9 @@ namespace GOTHIC_ENGINE {
 					int x, y;
 					cam->Project(&viewPos, x, y);
 					if (viewPos[2] > cam->nearClipZ) {
-						int hp = foundNpc->attribute[NPC_ATR_HITPOINTS];
-						bool isDead = hp <= 0;
-						if (isDead) {
-							if ((y - dmg->lastY) > 0) {
-								dmg->correctionShiftByY = dmg->correctionShiftByY + y - dmg->lastY;
-							}							
-						}
-
+						if ((y - dmg->lastY) > 0) {
+							dmg->correctionShiftByY = dmg->correctionShiftByY + y - dmg->lastY;
+						}							
 						int currentX = screen->anx(x + 0.5f) + shiftX;
 						int currentY = screen->any(y + 0.5f - dmg->correctionShiftByY) - tick;
 						damageView->Print(currentX, currentY, dmg->damage);
