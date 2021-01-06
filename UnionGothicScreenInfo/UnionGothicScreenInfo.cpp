@@ -157,8 +157,8 @@ namespace GOTHIC_ENGINE {
 		playerManaNamePos = zoptions->ReadInt("show_additional_info", "playerManaNamePosMode", 0);
 
 		baseScaleEnemyBar = zoptions->ReadReal("show_additional_info", "baseScaleEnemyBar", 1.0);
-		baseScaleEnemyBar = max(0.7, baseScaleEnemyBar);
-		baseScaleEnemyBar = min(1.5, baseScaleEnemyBar);
+		baseScaleEnemyBar = max(0.5, baseScaleEnemyBar);
+		baseScaleEnemyBar = min(2.0, baseScaleEnemyBar);
 		bNeedShowEnemyNameAbobeBar = zoptions->ReadInt("show_additional_info", "bNeedShowEnemyNameAbobeBar", FALSE);
 
 
@@ -269,6 +269,9 @@ namespace GOTHIC_ENGINE {
 
 	void ShowEnemyData() {
 		needShowEnemyName = false;
+		const int fSize = screenAddInfo->FontY();
+		const int fSizeHalf = screenAddInfo->FontY() / 2;
+
 		if (bshowEnemyHealth) {
 			oCViewStatusBar* focusBar = ogame->focusBar;
 			oCNpc* focusNpc = player->GetFocusNpc();
@@ -304,17 +307,15 @@ namespace GOTHIC_ENGINE {
 				focusBar->vsizex = barSizeOriginalX * scaleMult;
 				focusBar->vsizey = barSizeOriginalY * scaleMult;
 				focusBar->vposx = xBarEnemy + (screen->FontSize(focusNpc->name[0]) / 2) - (focusBar->vsizex) / 2;
-				focusBar->vposy = bNeedShowEnemyNameAbobeBar ? yBarEnemy : yBarEnemy - 2 * screenAddInfo->FontY();
+				focusBar->vposy = bNeedShowEnemyNameAbobeBar ? yBarEnemy - fSize : yBarEnemy - 2 * fSize;
 			}
 
 			if (focusBar) {
 				int focusX = focusBar->vposx;
-				int focusY = focusBar->vposy;
+				int focusY = focusBar->vposy;	
 				int focusSize = focusBar->vsizey;
 				int y1;
 				int y2;
-				int fSize = screenAddInfo->FontY();
-				int fSizeHalf = screenAddInfo->FontY()/2;
 
 				if (bNeedShowBarAboveEnemy) {
 					if (bNeedShowEnemyNameAbobeBar) {
