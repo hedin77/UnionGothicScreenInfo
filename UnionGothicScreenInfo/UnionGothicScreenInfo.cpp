@@ -20,6 +20,8 @@ namespace GOTHIC_ENGINE {
 
 	static Array<DamageText> damages;
 	static Timer mainTimer;
+	static int bNeedShowEnemyNameAbobeBar;
+	static bool needShowEnemyName = false;
 
 	const int AST_TIMER_FPS_SHOW = 0;
 	const int AST_TIMER_TIME_SHOW = 1;
@@ -51,6 +53,7 @@ namespace GOTHIC_ENGINE {
 	int bMunitionInfo;
 	int xBarEnemy; 
 	int yBarEnemy;
+	zCOLOR enemyTextColor;
 	int bNeedSpeedMode;
 	Array<double> speedModeMults;
 	int currentIndexSpeedMult; 
@@ -64,8 +67,9 @@ namespace GOTHIC_ENGINE {
 	zCOLOR damageColorInfo;	
 	int speedWorldKeyId;
 	bool damageShowZero; 
-	int barSizeOriginalX = -1;
-	int barSizeOriginalY = -1;
+	int barSizeOriginalX = 0;
+	int barSizeOriginalY = 0;
+	float baseScaleEnemyBar = 1; 	
 
 	void MultParamToDoubleArray(zSTRING str, Array<double> arraysMult) {
 		bool oneFound = false; 
@@ -152,6 +156,12 @@ namespace GOTHIC_ENGINE {
 		playerHealthNamePos = zoptions->ReadInt("show_additional_info", "playerHealthNamePosMode", 0);
 		playerManaNamePos = zoptions->ReadInt("show_additional_info", "playerManaNamePosMode", 0);
 
+		baseScaleEnemyBar = zoptions->ReadReal("show_additional_info", "baseScaleEnemyBar", 1.0);
+		baseScaleEnemyBar = max(0.7, baseScaleEnemyBar);
+		baseScaleEnemyBar = min(1.5, baseScaleEnemyBar);
+		bNeedShowEnemyNameAbobeBar = zoptions->ReadInt("show_additional_info", "bNeedShowEnemyNameAbobeBar", FALSE);
+
+
 	}
 
 	void ShowZTime() {
@@ -183,32 +193,8 @@ namespace GOTHIC_ENGINE {
 			scaleMult = min(enemyBarScaleMax, scaleMult);
 			return scaleMult;
 		}
-		else {
+		else { 
 			return 1;
-		}
-	}
-
-	void MoveEnemyBar() {
-		oCNpc* focusNpc = player->GetFocusNpc();
-		if (focusNpc)
-		{
-
-			oCViewStatusBar* focusBar = ogame->focusBar;
-			if (barSizeOriginalX == -1) {
-				barSizeOriginalX = focusBar->vsizex;
-				barSizeOriginalY = focusBar->vsizey;				
-			}
-			
-			float scaleMult = getScaleMult();
-			focusBar->vposx = xBarEnemy + (screen->FontSize(focusNpc->name[0]) / 2) - (focusBar->vsizex) / 2;
-			focusBar->vposy = yBarEnemy - 250;
-			focusBar->vsizex = barSizeOriginalX * scaleMult;
-			focusBar->vsizey = barSizeOriginalY * scaleMult;
-
-		}
-		else {
-			xBarEnemy = -500;
-			yBarEnemy = -500;
 		}
 	}
 
@@ -272,10 +258,108 @@ namespace GOTHIC_ENGINE {
 		screenAddInfo->Print(x, y, name);
 	}
 
-	void ShowEnemyAndHealthAndMana() {
-		if (bshowEnemyHealth && bNeedShowBarAboveEnemy) {
-			MoveEnemyBar();
+	void ResetEnemyBarData(oCViewStatusBar* focusBar) {
+		xBarEnemy = -500;
+		yBarEnemy = -500;
+		if (focusBar) {
+			focusBar->vposx = -500;
+			focusBar->vposy = -500;
 		}
+	}
+
+	void ShowEnemyData() {
+		needShowEnemyName = false;
+		if (bshowEnemyHealth) {
+			oCViewStatusBar* focusBar = ogame->focusBar;
+			oCNpc* focusNpc = player->GetFocusNpc();
+
+			if (bNeedShowBarAboveEnemy && focusBar) {
+				if (focusBar) {
+					focusBar->vposx = -500;
+					focusBar->vposy = -500;
+				}
+
+				if (!focusNpc) {
+					ResetEnemyBarData(focusBar);
+					return;
+				}
+				else {
+					zVEC3 npcPosition = focusNpc->GetPositionWorld() + zVEC3(0.0f, 0.0f, 0.0f);
+					zCCamera* cam = ogame->GetCamera();
+					zVEC3 viewPos = cam->GetTransform(zTCamTrafoType::zCAM_TRAFO_VIEW) * npcPosition;
+					int x, y;
+					cam->Project(&viewPos, x, y);
+					if (viewPos[2] <= cam->nearClipZ) {
+						ResetEnemyBarData(focusBar);
+						return;
+					}
+				}
+
+				float normScale = getScaleMult();
+				float scaleMult = normScale * baseScaleEnemyBar;
+				if (barSizeOriginalX == 0) {
+					barSizeOriginalX = focusBar->vsizex;
+					barSizeOriginalY = focusBar->vsizey;
+				}			
+				focusBar->vsizex = barSizeOriginalX * scaleMult;
+				focusBar->vsizey = barSizeOriginalY * scaleMult;
+				focusBar->vposx = xBarEnemy + (screen->FontSize(focusNpc->name[0]) / 2) - (focusBar->vsizex) / 2;
+				focusBar->vposy = bNeedShowEnemyNameAbobeBar ? yBarEnemy : yBarEnemy - 2 * screenAddInfo->FontY();
+			}
+
+			if (focusBar) {
+				int focusX = focusBar->vposx;
+				int focusY = focusBar->vposy;
+				int focusSize = focusBar->vsizey;
+				int y1;
+				int y2;
+				int fSize = screenAddInfo->FontY();
+				int fSizeHalf = screenAddInfo->FontY()/2;
+
+				if (bNeedShowBarAboveEnemy) {
+					if (bNeedShowEnemyNameAbobeBar) {
+						y1 = focusY - fSize - fSizeHalf;
+						y2 = focusY - 2 * fSize - fSizeHalf;
+					}
+					else {
+						y1 = focusY - fSize - fSizeHalf;
+						y2 = focusY + focusSize/2 + fSize;
+					}
+				}
+				else {
+					y1 = focusY +  focusSize + screenAddInfo->FontY() / 2; 
+				}
+
+				if (focusNpc && focusNpc->attribute[NPC_ATR_HITPOINTS] > 0) {
+					zSTRING npcName = focusNpc->name[0];
+					int hp = focusNpc->attribute[NPC_ATR_HITPOINTS];
+					int hpMax = focusNpc->attribute[NPC_ATR_HITPOINTSMAX];
+					zSTRING str = zSTRING(hp) + "/" + zSTRING(hpMax);
+					int x = focusX + (focusBar->vsizex) / 2 - (screenAddInfo->FontSize(str) / 2);
+  					screenAddInfo->Print(
+						x, 
+						bNeedShowEnemyNameAbobeBar ? y2 : y1, 
+						str
+					);
+
+					if (bNeedShowBarAboveEnemy) {
+						zCOLOR oldColor = screenAddInfo->fontColor;
+						screenAddInfo->fontColor = enemyTextColor;
+						needShowEnemyName = true;
+						screenAddInfo->Print(
+							x + (screen->FontSize(str) / 2) - (screen->FontSize(npcName)) / 2,
+							bNeedShowEnemyNameAbobeBar ? y1 : y2,
+							npcName
+						);
+						needShowEnemyName = false;
+						screenAddInfo->fontColor = oldColor;
+					}
+				}
+			}
+		}
+	}
+
+	void ShowPlayerData() {
 
 		if (bshowPlayerHealthAndMana) {
 			oCViewStatusBar* hpBar = ogame->hpBar;
@@ -287,33 +371,8 @@ namespace GOTHIC_ENGINE {
 				showBar(manaBar, playerManaNamePos, mana);
 			}
 		}
-
-		if (bshowEnemyHealth) {
-			oCViewStatusBar* focusBar = ogame->focusBar;
-			if (focusBar) {
-				int focusX = focusBar->vposx;
-				int focusY = focusBar->vposy;
-				int focusSize = focusBar->vsizey;
-				int  focusPSizeX = focusBar->psizex;
-
-				float scaleMult = getScaleMult();
-				float addY = (1.6 * enemyBarScaleMin / scaleMult);
-
-				int y = bNeedShowBarAboveEnemy ? focusY - (focusSize * (0.2 + addY)) : focusY + (focusSize * 1.4);
-
-
-				oCNpc* npc = player->GetFocusNpc();
-				if (npc && npc->attribute[NPC_ATR_HITPOINTS] > 0 ) {
-					zSTRING npcName = npc->name[0];
-					int hp = npc->attribute[NPC_ATR_HITPOINTS];
-					int hpMax = npc->attribute[NPC_ATR_HITPOINTSMAX];
-					zSTRING str = zSTRING(hp) + "/" + zSTRING(hpMax);
-					int x = focusX + (focusBar->vsizex) / 2 - (screenAddInfo->FontSize(str) / 2);
-					screenAddInfo->Print(x, y, str);
-				}
-			}
-		}
 	}
+
 
 	void checkSpeedMode() {
 		if (bNeedSpeedMode) {
@@ -492,7 +551,8 @@ namespace GOTHIC_ENGINE {
 		}
 	
 		MunitionLoop();
-		ShowEnemyAndHealthAndMana();		
+		ShowPlayerData();
+		ShowEnemyData();
 		checkSpeedMode();
 		ShowZTime();	
 		DamageLoop();

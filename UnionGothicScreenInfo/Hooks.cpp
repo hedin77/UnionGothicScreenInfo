@@ -9,7 +9,6 @@ namespace GOTHIC_ENGINE {
         &View_Print, IvkEnabled(ENGINE));
     void __fastcall View_Print(zCView* _this, void* vt, int x, int y, zSTRING& text)
     {
-
         if (player)
         {
             oCNpc* focusNpc = player->GetFocusNpc();
@@ -18,15 +17,21 @@ namespace GOTHIC_ENGINE {
                  string s2 = (A focusNpc->name[0]).Replace(A"\n", A"").Shrink();
 
                  if (bNeedShowBarAboveEnemy && (s1.Compare(s2))) {
-                    xBarEnemy = x;
-                    if (y < 500) {
-                        y = 500;
+                    if (!needShowEnemyName) {
+                        if (y < 600) {
+                            y = 600;
+                        }
+                        yBarEnemy = y;
+                        xBarEnemy = x;
+                        enemyTextColor = _this->fontColor;
                     }
-                    yBarEnemy = y;
+                    if(needShowEnemyName)
+                        pView_Print(_this, x, y, text);
+                    return;
                 }
             }
         }
-        pView_Print(_this, x, y, text);
+       pView_Print(_this, x, y, text);
     }
 
     
