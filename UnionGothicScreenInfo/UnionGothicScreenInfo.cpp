@@ -539,6 +539,12 @@ namespace GOTHIC_ENGINE {
 			|| !oCInformationManager::GetInformationManager().HasFinished() 
 			|| ogame->pause_screen || ogame->singleStep) {
 
+
+			oCViewStatusBar* focusBar = ogame->focusBar;
+			if (bNeedShowBarAboveEnemy && focusBar) {
+				ResetEnemyBarData(focusBar);
+			}
+
 			if (bNeedSpeedMode) {
 				for (uint ii = 0; ii < speedModeMults.GetNum(); ii++) {
 					if (speedModeMults[ii] == 1.0) {
