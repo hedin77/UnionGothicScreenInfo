@@ -12,10 +12,16 @@ namespace GOTHIC_ENGINE {
 		oCNpc* targetEnemy;
 		int lastY; 
 		int correctionShiftByY;
+		int startPosX;
 	};
 
 	struct BarParams {
 		int x; int y;  int h; int w;
+	};
+
+	enum DamageMode
+	{
+		DAMAGE_ABOVE_ENEMY, DAMAGE_ON_SCREEN
 	};
 
 	static Array<DamageText> damages;
@@ -70,6 +76,11 @@ namespace GOTHIC_ENGINE {
 	int barSizeOriginalX = 0;
 	int barSizeOriginalY = 0;
 	float baseScaleEnemyBar = 1; 	
+	static DamageMode damageMode;
+	static int damageStartPosX;
+	static int damageStartPosY;
+	static const int POSSIBLE_SHIFT_BY_X = 350; 
+	static const int POSSIBLE_SHIFT_BY_Y = 150;
 
 	void MultParamToDoubleArray(zSTRING str, Array<double> arraysMult) {
 		bool oneFound = false; 
@@ -144,9 +155,13 @@ namespace GOTHIC_ENGINE {
 		int damageColorB = zoptions->ReadInt("show_additional_info", "damageColorB", 0);
 		damageColorInfo = zCOLOR(damageColorR, damageColorG, damageColorB);
 		damageShowZero = zoptions->ReadInt("show_additional_info", "damageShowZero", TRUE);
+		int dmode = zoptions->ReadInt("show_additional_info", "damageMode", 0);
+		damageMode = dmode == 0 ? DAMAGE_ABOVE_ENEMY : DAMAGE_ON_SCREEN;
+		damageStartPosX = zoptions->ReadInt("show_additional_info", "damageStartPosX", 5500);
+		damageStartPosY = zoptions->ReadInt("show_additional_info", "damageStartPosY", 4000);
+
 
 		currentIndexSpeedMult = 0; 
-
 		bNeedShowBarAboveEnemy = zoptions->ReadInt("show_additional_info", "bNeedShowBarAboveEnemy", TRUE);
 		bshowEnemyHealth = zoptions->ReadInt("show_additional_info", "bShowEnemyHealth", TRUE);
 
@@ -441,6 +456,43 @@ namespace GOTHIC_ENGINE {
 		damageView->ClrPrintwin();
 	}
 
+	int getFreePosX() {
+		int res = damageStartPosX;
+		int cnt = 0;
+		bool freePosFound; 
+		int shiftXRight = 0;
+		int shiftXLeft = 0;
+		int currentShift; 
+
+		while (cnt++ < 500) {
+			freePosFound = true; 
+			if (cnt % 2 == 0) {
+				currentShift = shiftXRight;
+				shiftXRight += POSSIBLE_SHIFT_BY_X;
+			}
+			else {
+				currentShift = shiftXLeft;
+				shiftXLeft -= POSSIBLE_SHIFT_BY_X;
+			}
+
+			int len = damages.GetNum();
+			for (uint i = 0; i < len; i++) {
+				DamageText* dmg = damages.GetSafe(i);
+				int currentPos = damageStartPosX + currentShift; 
+				bool allowByX = dmg->startPosX <= currentPos - POSSIBLE_SHIFT_BY_X 	||  dmg->startPosX >= currentPos + POSSIBLE_SHIFT_BY_X;
+				if ((damageStartPosY - dmg->lastY < POSSIBLE_SHIFT_BY_Y) && !allowByX) {
+					freePosFound = false;
+				}
+			}
+
+			if (freePosFound) {
+				res = damageStartPosX + currentShift;
+				break;
+			}
+		}
+		return res; 	
+	}
+
 	void  DamageLoop()
 	{
 		if (bNeedShowDamageInfo && damages.GetNum() > 0) {
@@ -463,12 +515,10 @@ namespace GOTHIC_ENGINE {
 
 			for (uint i = 0; i < damages.GetNum(); i++) {
 				DamageText* dmg = damages.GetSafe(i);
-				tick = 1.7 * dmg->currentTime;
-				int shiftX = min(tick/3, 80);
-
 				oCNpc* foundNpc = dmg->targetEnemy;
-
-				if (foundNpc) {
+				tick = 1.7 * dmg->currentTime;
+				if(foundNpc && damageMode == DAMAGE_ABOVE_ENEMY) {
+					int shiftX = min(tick / 3, 80);
 					zVEC3 npcPosition = foundNpc->GetPositionWorld() + zVEC3(0.0f, 130.0f, 0.0f);
 					zCCamera* cam = ogame->GetCamera();
 					zVEC3 viewPos = cam->GetTransform(zTCamTrafoType::zCAM_TRAFO_VIEW) * npcPosition;
@@ -477,14 +527,16 @@ namespace GOTHIC_ENGINE {
 					if (viewPos[2] > cam->nearClipZ) {
 						if ((y - dmg->lastY) > 0) {
 							dmg->correctionShiftByY = dmg->correctionShiftByY + y - dmg->lastY;
-						}							
+						}
 						int currentX = screen->anx(x + 0.5f) + shiftX;
 						int currentY = screen->any(y + 0.5f - dmg->correctionShiftByY) - tick;
 						damageView->Print(currentX, currentY, dmg->damage);
 						dmg->lastY = y;
 					}
+				} else if(damageMode == DAMAGE_ON_SCREEN) {
+					dmg->lastY = damageStartPosY - tick;
+					damageView->Print(dmg->startPosX, dmg->lastY, dmg->damage);
 				}
-				
 			}
 		}
 

@@ -47,17 +47,24 @@ namespace GOTHIC_ENGINE {
         if (bNeedShowDamageInfo) {
             int realDamage = oldTargetHP - target->GetAttribute(NPC_ATR_HITPOINTS);
             if (playerIsDamager && (realDamage > 0 || damageShowZero)) {
-                zVEC3 npcPosition = target->GetPositionWorld() + zVEC3(0.0f, 130.0f, 0.0f);
-                zCCamera* cam = ogame->GetCamera();
-                zVEC3 viewPos = cam->GetTransform(zTCamTrafoType::zCAM_TRAFO_VIEW) * npcPosition;
-                int x, y;
-                cam->Project(&viewPos, x, y);
                 DamageText dmg;
                 dmg.currentTime = 0;
                 dmg.damage = A(realDamage);
-                dmg.targetEnemy = target;
-                dmg.correctionShiftByY = 0;
-                dmg.lastY = y;
+                if (damageMode == DAMAGE_ABOVE_ENEMY) {
+                    zVEC3 npcPosition = target->GetPositionWorld() + zVEC3(0.0f, 130.0f, 0.0f);
+                    zCCamera* cam = ogame->GetCamera();
+                    zVEC3 viewPos = cam->GetTransform(zTCamTrafoType::zCAM_TRAFO_VIEW) * npcPosition;
+                    int x, y;
+                    cam->Project(&viewPos, x, y);
+                    dmg.targetEnemy = target;
+                    dmg.correctionShiftByY = 0;
+                    dmg.lastY = y;
+                }
+                else if (damageMode == DAMAGE_ON_SCREEN)
+                {
+                    dmg.startPosX = getFreePosX();
+                    dmg.lastY = damageStartPosY;
+                }
                 damages.Insert(dmg);
             }
         }
