@@ -13,6 +13,10 @@ namespace GOTHIC_ENGINE {
         {
             oCNpc* focusNpc = player->GetFocusNpc();
             if (focusNpc) {
+                if (focusNpc->attribute[NPC_ATR_HITPOINTS] <= 0) {
+                    pView_Print(_this, x, y, text);
+                    return;
+                }
                  string s1 = (A text).Replace(A"\n", A"").Shrink();
                  string s2 = (A focusNpc->name[0]).Replace(A"\n", A"").Shrink();
 
