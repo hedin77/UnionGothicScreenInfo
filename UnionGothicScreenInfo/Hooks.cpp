@@ -12,7 +12,7 @@ namespace GOTHIC_ENGINE {
         if (player)
         {
             oCNpc* focusNpc = player->GetFocusNpc();
-            if (focusNpc) {
+            if (focusNpc && infoFinished) {
                 if (focusNpc->attribute[NPC_ATR_HITPOINTS] <= 0) {
                     pView_Print(_this, x, y, text);
                     return;
@@ -29,6 +29,7 @@ namespace GOTHIC_ENGINE {
                         xBarEnemy = x;
                         enemyTextColor = _this->fontColor;
                     }
+
                     if(needShowEnemyName)
                         pView_Print(_this, x, y, text);
                     return;

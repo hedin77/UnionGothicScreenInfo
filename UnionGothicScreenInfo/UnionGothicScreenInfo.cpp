@@ -5,6 +5,8 @@ namespace GOTHIC_ENGINE {
 
 	// Add your code here . . .
 	#define playerIsDead player->attribute[NPC_ATR_HITPOINTS] <= 0
+	#define infoFinished oCInformationManager::GetInformationManager().HasFinished()
+	
 
 	struct DamageText { 
 		string damage;
@@ -176,6 +178,9 @@ namespace GOTHIC_ENGINE {
 		baseScaleEnemyBar = min(2.0, baseScaleEnemyBar);
 		bNeedShowEnemyNameAbobeBar = zoptions->ReadInt("show_additional_info", "bNeedShowEnemyNameAbobeBar", FALSE);
 
+		if(!bNeedShowBarAboveEnemy)
+			bNeedShowEnemyNameAbobeBar = false;
+
 
 	}
 
@@ -287,7 +292,7 @@ namespace GOTHIC_ENGINE {
 		const int fSize = screenAddInfo->FontY();
 		const int fSizeHalf = screenAddInfo->FontY() / 2;
 
-		if (bshowEnemyHealth) {
+		if (bshowEnemyHealth || bNeedShowBarAboveEnemy) {
 			oCViewStatusBar* focusBar = ogame->focusBar;
 			oCNpc* focusNpc = player->GetFocusNpc();
 
@@ -347,17 +352,22 @@ namespace GOTHIC_ENGINE {
 				}
 
 				if (focusNpc && focusNpc->attribute[NPC_ATR_HITPOINTS] > 0) {
-					zSTRING npcName = focusNpc->name[0];
+
+
 					int hp = focusNpc->attribute[NPC_ATR_HITPOINTS];
 					int hpMax = focusNpc->attribute[NPC_ATR_HITPOINTSMAX];
 					zSTRING str = zSTRING(hp) + "/" + zSTRING(hpMax);
 					int x = focusX + (focusBar->vsizex) / 2 - (screenAddInfo->FontSize(str) / 2);
-  					screenAddInfo->Print(
-						x, 
-						bNeedShowEnemyNameAbobeBar ? y2 : y1, 
-						str
-					);
 
+					if (bshowEnemyHealth) {
+						screenAddInfo->Print(
+							x,
+							bNeedShowEnemyNameAbobeBar ? y2 : y1,
+							str
+						);
+					}
+
+					zSTRING npcName = focusNpc->name[0];
 					if (bNeedShowBarAboveEnemy) {
 						zCOLOR oldColor = screenAddInfo->fontColor;
 						screenAddInfo->fontColor = enemyTextColor;
@@ -376,7 +386,6 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void ShowPlayerData() {
-
 		if (bshowPlayerHealthAndMana) {
 			oCViewStatusBar* hpBar = ogame->hpBar;
 			oCViewStatusBar* manaBar = ogame->manaBar;
@@ -583,15 +592,11 @@ namespace GOTHIC_ENGINE {
 	void MainLoop() {		
 		checkViews();
 
-		if (player) {
+		if (player && infoFinished) {
 			MovePlayerBars();
 		}
 
-		if (!ogame || !player || playerIsDead
-			|| !oCInformationManager::GetInformationManager().HasFinished() 
-			|| ogame->pause_screen || ogame->singleStep) {
-
-
+		if (!ogame || !player || playerIsDead || !infoFinished || ogame->pause_screen || ogame->singleStep) {
 			oCViewStatusBar* focusBar = ogame->focusBar;
 			if (bNeedShowBarAboveEnemy && focusBar) {
 				ResetEnemyBarData(focusBar);
