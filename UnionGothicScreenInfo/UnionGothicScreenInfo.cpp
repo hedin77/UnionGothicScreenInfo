@@ -222,18 +222,14 @@ namespace GOTHIC_ENGINE {
 		if (!bMunitionInfo)
 			return;
 
-		if (!player || playerIsDead) {
-			screenMunitionInfo->ClrPrintwin();
-			return;
-		}
-
 		oCItem* gun = player->GetEquippedRangedWeapon();
-
 		if (!gun)
 			gun = player->GetWeapon();
 
-		if (!gun || ((gun->mainflag & ITM_CAT_FF) != ITM_CAT_FF) || gun->munition <= 0)
+		if (!gun || ((gun->mainflag & ITM_CAT_FF) != ITM_CAT_FF) || gun->munition <= 0) {
+			screenMunitionInfo->ClrPrintwin();
 			return;
+		}
 
 		player->inventory2.UnpackAllItems();
 		oCItem* munition = player->IsInInv(gun->munition, 1);
@@ -597,6 +593,7 @@ namespace GOTHIC_ENGINE {
 		}
 
 		if (!ogame || !player || playerIsDead || !infoFinished || ogame->pause_screen || ogame->singleStep) {
+			screenMunitionInfo->ClrPrintwin();
 			oCViewStatusBar* focusBar = ogame->focusBar;
 			if (bNeedShowBarAboveEnemy && focusBar) {
 				ResetEnemyBarData(focusBar);
