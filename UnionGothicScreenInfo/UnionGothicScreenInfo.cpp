@@ -396,7 +396,7 @@ namespace GOTHIC_ENGINE {
 
 
 	void checkSpeedMode() {
-		if (bNeedSpeedMode) {
+		if (bNeedSpeedMode && !zCConsole::cur_console) {
 			if(zinput->KeyToggled(speedWorldKeyId)){
 				currentIndexSpeedMult = (currentIndexSpeedMult + 1) % speedModeMults.GetNum();
 				int nFont = screenSpeedInfo->FontY();
