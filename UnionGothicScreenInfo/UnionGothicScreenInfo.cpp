@@ -592,7 +592,7 @@ namespace GOTHIC_ENGINE {
 			MovePlayerBars();
 		}
 
-		if (!ogame || !player || playerIsDead || !infoFinished || ogame->pause_screen || ogame->singleStep) {
+		if (!ogame || !player || playerIsDead || !infoFinished || ogame->pause_screen || ogame->singleStep || player->inventory2.IsOpen()) {
 			screenMunitionInfo->ClrPrintwin();
 			oCViewStatusBar* focusBar = ogame->focusBar;
 			if (bNeedShowBarAboveEnemy && focusBar) {
@@ -607,6 +607,11 @@ namespace GOTHIC_ENGINE {
 						screenSpeedInfo->ClrPrintwin();
 					}
 				}
+			}
+
+			if (player && player->inventory2.IsOpen()) {
+				ogame->hpBar->vposx = -1000;
+				ogame->manaBar->vposx = -1000;
 			}
 			return;
 		}

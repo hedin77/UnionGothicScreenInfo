@@ -2,4 +2,5 @@
 
 // User API for oCNpc
 // Add your methods here
+void OnDamage_Hit_Hedin(oSDamageDescriptor&);
 

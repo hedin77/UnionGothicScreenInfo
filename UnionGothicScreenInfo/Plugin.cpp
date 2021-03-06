@@ -19,6 +19,7 @@ namespace GOTHIC_ENGINE {
 
   void Game_Loop() {
 	  MainLoop();
+      processNewNpc();
   }
 
   void Game_SaveBegin() {
