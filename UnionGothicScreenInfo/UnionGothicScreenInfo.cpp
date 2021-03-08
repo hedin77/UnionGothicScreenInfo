@@ -610,8 +610,10 @@ namespace GOTHIC_ENGINE {
 			}
 
 			if (player && player->inventory2.IsOpen()) {
-				ogame->hpBar->vposx = -1000;
-				ogame->manaBar->vposx = -1000;
+				ogame->hpBar->vposx = -8000;
+				ogame->manaBar->vposx = -8000;
+				ogame->hpBar->vposy = -8000;
+				ogame->manaBar->vposy = -8000;
 			}
 			return;
 		}
