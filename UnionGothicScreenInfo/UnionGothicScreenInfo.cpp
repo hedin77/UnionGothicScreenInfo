@@ -1,12 +1,14 @@
 // Supported with union (c) 2020 Union team
 // Union SOURCE file
+#include <chrono>
+using namespace std::chrono;
 
 namespace GOTHIC_ENGINE {
 
 	// Add your code here . . .
 	#define playerIsDead player->attribute[NPC_ATR_HITPOINTS] <= 0
 	#define infoFinished oCInformationManager::GetInformationManager().HasFinished()
-	
+	#define invIsOpen player->inventory2.IsOpen()	
 
 	struct DamageText { 
 		string damage;
@@ -25,6 +27,8 @@ namespace GOTHIC_ENGINE {
 	{
 		DAMAGE_ABOVE_ENEMY, DAMAGE_ON_SCREEN
 	};
+
+	milliseconds lastInteractionTime; 
 
 	static Array<DamageText> damages;
 	static Timer mainTimer;
@@ -115,6 +119,8 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void initOptions() {		
+		lastInteractionTime = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+
 		zSTRING defaultHealthName = "HP";
 		zSTRING defaultManaName = "MP";
 
@@ -609,11 +615,24 @@ namespace GOTHIC_ENGINE {
 				}
 			}
 
+			bool isInteract = player->HasBodyStateModifier(BS_ITEMINTERACT); 
+			
 			if (player && player->inventory2.IsOpen()) {
-				ogame->hpBar->vposx = -8000;
-				ogame->manaBar->vposx = -8000;
-				ogame->hpBar->vposy = -8000;
-				ogame->manaBar->vposy = -8000;
+				if (isInteract && player->interactItem && (player->interactItem->HasFlag(ITM_CAT_FOOD) || player->interactItem->HasFlag(ITM_CAT_POTION))) {
+					ShowPlayerData();
+					lastInteractionTime = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+				}
+				else {
+					if (duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count() - lastInteractionTime.count() > 3000) {
+						ogame->hpBar->vposx = -8000;
+						ogame->manaBar->vposx = -8000;
+						ogame->hpBar->vposy = -8000;
+						ogame->manaBar->vposy = -8000;
+					}
+					else {
+						ShowPlayerData();
+					}
+				}
 			}
 			return;
 		}
